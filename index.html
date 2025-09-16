@@ -900,6 +900,10 @@
                         <input type="email" id="email" name="email" required>
                     </div>
                     <div class="form-group">
+                        <label for="phone">연락처</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                    <div class="form-group">
                         <label for="message">메시지</label>
                         <textarea id="message" name="message" required></textarea>
                     </div>
@@ -982,27 +986,67 @@
             observer.observe(el);
         });
 
+        // Google Sheets API 설정
+        // 실제 스크립트 URL로 교체하세요 (Google Apps Script 배포 후 생성되는 URL)
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ5EKgS6V8qyZUkgy3npZ0x9hl6IimijJLuYy6XW5s_Ud9U-QBD8sVd9LacgVBMhWaxQ/exec';
+        
         // Form submission
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
+        document.getElementById('contactForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Get form data
             const formData = new FormData(this);
             const name = formData.get('name');
             const email = formData.get('email');
+            const phone = formData.get('phone');
             const message = formData.get('message');
             
             // Simple validation
-            if (!name || !email || !message) {
+            if (!name || !email || !phone || !message) {
                 alert('모든 필드를 입력해주세요.');
                 return;
             }
             
-            // Simulate form submission
-            alert(`안녕하세요 ${name}님!\n\n메시지가 성공적으로 전송되었습니다.\n빠른 시일 내에 연락드리겠습니다.`);
+            // Show loading state
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '전송 중...';
+            submitBtn.disabled = true;
             
-            // Reset form
-            this.reset();
+            try {
+                // Prepare data for Google Sheets
+                const data = {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    message: message,
+                    timestamp: new Date().toLocaleString('ko-KR')
+                };
+                
+                // Send data to Google Sheets
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                // Show success message
+                alert(`안녕하세요 ${name}님!\n\n메시지가 성공적으로 전송되었습니다.\n빠른 시일 내에 연락드리겠습니다.`);
+                
+                // Reset form
+                this.reset();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('전송 중 오류가 발생했습니다. 다시 시도해주세요.');
+            } finally {
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
         });
 
         // Parallax effect for hero section
